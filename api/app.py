@@ -17,8 +17,9 @@ CORS(app)
 default_end_date = datetime.date.today().isoformat()
 default_start_date = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
 default_start_date_for_avg = (datetime.date.today() - datetime.timedelta(days=50)).isoformat()
+LOCAL_BALANCING_AUTHORITY = "MISO" #CHANGE BASED ON USER LOCATION (will need to handle post req)
 
-def getData(default_start_date):
+def getData(default_start_date, balancing_authority):
     def get_eia_timeseries(
         url_segment,
         facets,
@@ -109,18 +110,16 @@ def getData(default_start_date):
             **kwargs,
         )
 
-    LOCAL_BALANCING_AUTHORITY = "MISO" #CHANGE BASED ON USER LOCATION (will need to handle post req)
-
     local_generation_grid_mix = get_eia_grid_mix_timeseries(
-        [LOCAL_BALANCING_AUTHORITY],
+        [balancing_authority],
         # Optional: uncomment the lines below to try looking at a different time range to get data from other seasons.
         # start_date="2022-01-01",
         # end_date="2022-12-01",
     )
 
-    demand_df = get_eia_net_demand_and_generation_timeseries([LOCAL_BALANCING_AUTHORITY])
+    demand_df = get_eia_net_demand_and_generation_timeseries([balancing_authority])
 
-    interchange_df = get_eia_interchange_timeseries([LOCAL_BALANCING_AUTHORITY])
+    interchange_df = get_eia_interchange_timeseries([balancing_authority])
 
     # How much energy is both generated and consumed locally
     def get_energy_generated_and_consumed_locally(df):
@@ -155,7 +154,7 @@ def getData(default_start_date):
             ).reset_index("fromba"),
             pd.DataFrame(
                 {
-                    "fromba": LOCAL_BALANCING_AUTHORITY,
+                    "fromba": balancing_authority, #maybe change back to LOCAL
                     consumed_locally_column_name: energy_generated_and_used_locally,
                 }
             ),
@@ -236,22 +235,35 @@ def processData(grid_mix_df):
     return(percentage_data)
 
 
-@app.route('/api/app', methods=['GET'])
+@app.route('/api/app', methods=['GET', 'POST'])
 def get_schedule():
-    # processData(local_generation_grid_mix)
-    week_start_date = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
-    week_df = processData(getData(week_start_date))
+    if request.method == 'POST':
+        # If the request is a POST, handle criteria passed in the JSON body
+        ba = request.get_json()
+        print("Received criteria:", ba)
+        balancing_authority = ba.get("balancingAuthority")
 
-    month_start_date = (datetime.date.today() - datetime.timedelta(days=31)).isoformat()
-    month_df = processData(getData(month_start_date))
+            # If the request is a GET, process data with default criteria
+        week_start_date = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
+        week_df = processData(getData(week_start_date, balancing_authority))
+
+        month_start_date = (datetime.date.today() - datetime.timedelta(days=31)).isoformat()
+        month_df = processData(getData(month_start_date, balancing_authority))
+    else:
+        week_start_date = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
+        week_df = processData(getData(week_start_date, LOCAL_BALANCING_AUTHORITY))
+
+        month_start_date = (datetime.date.today() - datetime.timedelta(days=31)).isoformat()
+        month_df = processData(getData(month_start_date, LOCAL_BALANCING_AUTHORITY))
 
     mean_green_energy = month_df["green_energy"].mean()
     std_green_energy = month_df["green_energy"].std()
 
-    # Calculate Z-score and create a new column 'z_score'
+            # Calculate Z-score and create a new column 'z_score'
     week_df["z_score"] = (week_df["green_energy"] - mean_green_energy) / std_green_energy
 
     return week_df.to_json()
+
 
 if __name__ == '__main__':
     app.run(host="localhost", port=5000, debug=True)

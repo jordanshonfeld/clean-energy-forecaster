@@ -15,6 +15,7 @@ code {
 .timeline{
   display:grid;
   grid-template-columns: 1fr 1fr;
+  margin-top:50px;
 }
 
 .timeline div{
@@ -23,8 +24,29 @@ code {
   margin-left: 80px;
 }
 
+.timeline-container {
+  border-top: #69B34C solid 3px;
+}
+
 .timeline .right{
   background-color:aliceblue;
+}
+
+a{
+  color:#69B34C;
+  font-size: 20px;
+  text-decoration: none;
+  
+}
+
+a:hover{
+  text-shadow: whitesmoke 1px 1px;
+  transition: all .5s;
+  font-size: 25px;
+}
+
+a:active{
+  text-shadow: whitesmoke 1px 1px 2px;
 }
 
 

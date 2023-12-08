@@ -3,8 +3,10 @@ import './App.css';
 import React, { useState, useEffect } from 'react';
 
 
+
 function App() {
   const [data, setData] = useState(null);
+  const [balancingAuthority, setBalancingAuthority] = useState("MISO");
 
 useEffect(() => {
   console.log('Fetching data...');
@@ -16,6 +18,46 @@ useEffect(() => {
     })
     .catch(error => console.error(error));
 }, []);
+
+const fetchData = async () => {
+  try {
+    console.log('Sending POST request with criteria:', balancingAuthority);
+    const response = await fetch('http://127.0.0.1:5000/api/app', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({balancingAuthority}),
+    });
+
+    // Check if the response is successful (status code in the range 200-299)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    console.log('Data received:', json);
+    setData(json);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
+const handleBalancingAuthorityChange = (event) => {
+  setBalancingAuthority(event.target.value);
+};
+
+useEffect(() => {
+  fetchData();
+}, [balancingAuthority]); // Initial fetch when component mounts
+
+
+const handleSubmit = (event) => {
+  event.preventDefault();
+  // Trigger fetch on form submission
+  setData(null);
+  fetchData();
+};
 
 // #69B34C --> green
 // #ACB334 --> green-yellow
@@ -72,10 +114,20 @@ useEffect(() => {
     <div className="App">
       <header className="App-header">
 
-      
-
       <h1>Today's Energy Forecast</h1>
-      <div>
+      <form onSubmit={handleSubmit}>
+          <label htmlFor="balancingAuthority">Balancing Authority: </label>
+          <input
+            type="text"
+            id="balancingAuthority"
+            value={balancingAuthority}
+            onChange={handleBalancingAuthorityChange}
+          />
+          <button type="submit">Submit</button>
+        </form>
+
+        <p><a href="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48">Find yours here!</a></p>
+        <div class = "timeline-container">
         {data ? <pre>{processData(data)}</pre> : 'Loading...'}
       </div>
 
