@@ -3,7 +3,7 @@ This simple web application helps people visualize when to utilize clean energy 
 
 **To deploy this application yourself, clone the reponsitory in the API folder, run:**
 
-pip install flask <br>
+pip install flask <br></br>
 flask run
 
 **then, in the energy-planner folder run:**
