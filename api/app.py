@@ -17,7 +17,7 @@ CORS(app)
 default_end_date = datetime.date.today().isoformat()
 default_start_date = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
 default_start_date_for_avg = (datetime.date.today() - datetime.timedelta(days=50)).isoformat()
-LOCAL_BALANCING_AUTHORITY = "MISO" #CHANGE BASED ON USER LOCATION (will need to handle post req)
+LOCAL_BALANCING_AUTHORITY = "MISO" #CHANGE BASED ON USER LOCATION 
 
 def getData(default_start_date, balancing_authority):
     def get_eia_timeseries(
@@ -30,6 +30,9 @@ def getData(default_start_date, balancing_authority):
         """
         A generalized helper function to fetch data from the EIA API
         """
+        # Don't look! A plaintext API Key!!!!
+        # This key is available to anyone who submits a requist to eia.gov, and there is no sensitive data associated,
+        # so I left the key in plaintext in case anyone wants to deploy this project locally
         EIA_API_KEY = "Cry1Zzkd94TGqiiXVc5lffvfGYoeYK2VFY0rJKk0"
         api_url = f"https://api.eia.gov/v2/electricity/rto/{url_segment}/data/?api_key={EIA_API_KEY}"
 
@@ -41,7 +44,7 @@ def getData(default_start_date, balancing_authority):
                         "frequency": "hourly",
                         "data": ["value"],
                         # "facets": dict(**{"timezone": ["Pacific"]}, **facets),
-                        "facets": dict(**facets), #still need to figure out time zone
+                        "facets": dict(**facets), #w/out timezone
                         "start": start_date,
                         "end": end_date,
                         "sort": [{"column": "period", "direction": "desc"}],
@@ -112,7 +115,6 @@ def getData(default_start_date, balancing_authority):
 
     local_generation_grid_mix = get_eia_grid_mix_timeseries(
         [balancing_authority],
-        # Optional: uncomment the lines below to try looking at a different time range to get data from other seasons.
         # start_date="2022-01-01",
         # end_date="2022-12-01",
     )
@@ -154,7 +156,7 @@ def getData(default_start_date, balancing_authority):
             ).reset_index("fromba"),
             pd.DataFrame(
                 {
-                    "fromba": balancing_authority, #maybe change back to LOCAL
+                    "fromba": balancing_authority,
                     consumed_locally_column_name: energy_generated_and_used_locally,
                 }
             ),

@@ -30,7 +30,6 @@ const fetchData = async () => {
       body: JSON.stringify({balancingAuthority}),
     });
 
-    // Check if the response is successful (status code in the range 200-299)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -77,6 +76,9 @@ const handleSubmit = (event) => {
         // let dataset = JSON.parse(data);
         const z_score_for_colors = data.z_score;        
         const sections = [];
+        const date = new Date();
+        const time = date.getHours();
+        const curTimeIdString = "left"+time;
         let colorString = "#69B34C";
         for(let i = 0; i < 24; i++){
           if(z_score_for_colors[i] >= 1){
@@ -92,12 +94,11 @@ const handleSubmit = (event) => {
           } else {
             colorString = "#FF0D0D"
           }
-          //check z score for color... change string to "background-color:#XXXXXX"
           const time = i === 0? '12:00am': i > 12 ? i - 12 + ':00pm' : i + ':00am';
           sections.push(
             <React.Fragment key = {i}>
               <div className = "left">
-                <h1>{time}</h1>
+                {curTimeIdString === `left${i}` ? <h1 id={`left${i}`} style={{color: 'aqua'}}>{time}</h1> : <h1 id={`left${i}`} style={{color: 'white'}}>{time}</h1> }
               </div>
               <div className = "right" id = {`right${i}`} style= {{backgroundColor: colorString}}></div>
               </React.Fragment>
