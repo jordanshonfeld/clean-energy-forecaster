@@ -125,11 +125,14 @@ def getData(default_start_date, balancing_authority):
 
     # How much energy is both generated and consumed locally
     def get_energy_generated_and_consumed_locally(df):
-        demand_stats = df.groupby("type-name")["Demand (MWh)"].sum()
+        demand_stats = df.groupby("type")["Demand (MWh)"].sum()
         # If local demand is smaller than net (local) generation, that means: amount generated and used locally == Demand (net export)
         # If local generation is smaller than local demand, that means: amount generated and used locally == Net generation (net import)
         # Therefore, the amount generated and used locally is the minimum of these two
-        return min(demand_stats["Demand"], demand_stats["Net generation"])
+        # print(demand_stats)
+        local_demand = demand_stats.get("D", 0)
+        net_generation = demand_stats.get("NG", 0)
+        return min(local_demand, net_generation)
 
 
     energy_generated_and_used_locally = demand_df.groupby("timestamp").apply(
